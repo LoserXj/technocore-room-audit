@@ -1,0 +1,16 @@
+{
+  "old_sha256": "9c36bdce4856eff62c157bc9d8d85378b7ca7b0364f69d8780487f67f1d2c4ea",
+  "new_sha256": "4379caf0e0511a070a256ea141a909e99e910a1a0b6b75714e2622bd36c7439a",
+  "old_generation": "0",
+  "new_generation": "0",
+  "old_records": 21136,
+  "new_records": 24127,
+  "shared_seq_count": 21136,
+  "identical_raw_records_on_shared_seqs": 21136,
+  "changed_raw_records_on_shared_seqs": 0,
+  "first_changed_seq": null,
+  "old_only_seq_count": 0,
+  "new_only_seq_count": 2991,
+  "first_shared_seq": 9589585,
+  "last_shared_seq": 9610720
+}

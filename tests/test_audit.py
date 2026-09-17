@@ -4,7 +4,7 @@ import unittest
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from audit import BASE58, audit_export
+from audit import BASE58, audit_export, compare_exports
 
 
 def did_from_key(key):
@@ -18,6 +18,18 @@ def did_from_key(key):
 
 
 class AuditExportTests(unittest.TestCase):
+    def test_compare_exports_detects_changed_raw_record_and_new_tail(self):
+        old = b'{"seq":1,"text":"a"}\n{"seq":2,"text":"b"}\n'
+        new = b'{"seq":1,"text":"a"}\n{"seq":2,"text":"changed"}\n{"seq":3,"text":"c"}\n'
+        report = compare_exports(old, new, old_generation="0", new_generation="0")
+        self.assertEqual(report["shared_seq_count"], 2)
+        self.assertEqual(report["identical_raw_records_on_shared_seqs"], 1)
+        self.assertEqual(report["changed_raw_records_on_shared_seqs"], 1)
+        self.assertEqual(report["first_changed_seq"], 2)
+        self.assertEqual(report["new_only_seq_count"], 1)
+        with self.assertRaisesRegex(ValueError, "generations differ"):
+            compare_exports(old, new, old_generation="0", new_generation="1")
+
     def test_verifies_signatures_and_reports_gaps_without_exposing_text(self):
         key = Ed25519PrivateKey.generate()
         did = did_from_key(key)

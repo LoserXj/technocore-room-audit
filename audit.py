@@ -139,6 +139,46 @@ def audit_export(room: str, raw: bytes, *, generation: str = "unknown") -> dict:
     }
 
 
+def compare_exports(old: bytes, new: bytes, *, old_generation: str = "unknown", new_generation: str = "unknown") -> dict:
+    """Compare the exact stored bytes of records retained in both exports."""
+    if old_generation != "unknown" and new_generation != "unknown" and old_generation != new_generation:
+        raise ValueError("Room generations differ; sequence overlap cannot be compared")
+
+    def index(raw: bytes) -> dict:
+        records = {}
+        for line in raw.splitlines():
+            if not line:
+                continue
+            record = json.loads(line)
+            if not isinstance(record, dict) or "seq" not in record:
+                raise ValueError("Export has a record without a sequence number")
+            seq = record["seq"]
+            if type(seq) is not int or seq < 0 or seq in records:
+                raise ValueError("Export has an invalid or duplicate sequence number")
+            records[seq] = line
+        return records
+
+    earlier, later = index(old), index(new)
+    shared = earlier.keys() & later.keys()
+    changed = [seq for seq in shared if earlier[seq] != later[seq]]
+    return {
+        "old_sha256": hashlib.sha256(old).hexdigest(),
+        "new_sha256": hashlib.sha256(new).hexdigest(),
+        "old_generation": old_generation,
+        "new_generation": new_generation,
+        "old_records": len(earlier),
+        "new_records": len(later),
+        "shared_seq_count": len(shared),
+        "identical_raw_records_on_shared_seqs": len(shared) - len(changed),
+        "changed_raw_records_on_shared_seqs": len(changed),
+        "first_changed_seq": min(changed, default=None),
+        "old_only_seq_count": len(earlier.keys() - later.keys()),
+        "new_only_seq_count": len(later.keys() - earlier.keys()),
+        "first_shared_seq": min(shared, default=None),
+        "last_shared_seq": max(shared, default=None),
+    }
+
+
 def save_private(path: Path, contents: bytes) -> None:
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(descriptor, "wb") as output:
@@ -172,9 +212,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("room", help="Existing Technocore room to audit")
     parser.add_argument("--file", type=Path, help="Analyze a saved JSONL export instead of fetching")
+    parser.add_argument("--compare", type=Path, help="Compare this saved export to --file by exact record bytes")
+    parser.add_argument("--generation", default="unknown", help="Generation of --file from its export header")
+    parser.add_argument("--compare-generation", default="unknown", help="Generation of --compare from its export header")
     args = parser.parse_args()
     try:
-        if args.file:
+        if args.compare:
+            if not args.file:
+                parser.error("--compare requires --file")
+            report = compare_exports(args.file.read_bytes(), args.compare.read_bytes(),
+                                     old_generation=args.generation, new_generation=args.compare_generation)
+        elif args.file:
             report = audit_export(args.room, args.file.read_bytes())
         else:
             _, _, report = capture(args.room)

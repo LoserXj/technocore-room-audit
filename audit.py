@@ -48,6 +48,8 @@ def audit_export(room: str, raw: bytes, *, generation: str = "unknown") -> dict:
         raise ValueError("Invalid room name")
     counts = Counter()
     bodies = Counter()
+    signed_bodies = Counter()
+    body_signers = {}
     signer_counts = Counter()
     signers = set()
     previous_seq = None
@@ -101,10 +103,13 @@ def audit_export(room: str, raw: bytes, *, generation: str = "unknown") -> dict:
                 counts["valid_signatures"] += 1
                 signers.add(did)
                 signer_counts[did] += 1
+                signed_bodies[body] += 1
+                body_signers.setdefault(body, set()).add(did)
         else:
             counts["unsigned_records"] += 1
 
     repeated = [count for count in bodies.values() if count > 1]
+    cross_did_bodies = {body for body, dids in body_signers.items() if len(dids) > 1}
     return {
         "room": room,
         "generation": generation,
@@ -128,6 +133,9 @@ def audit_export(room: str, raw: bytes, *, generation: str = "unknown") -> dict:
         "repeated_body_variants": len(repeated),
         "records_with_repeated_body": sum(repeated),
         "max_identical_body_count": max(bodies.values(), default=0),
+        "body_variants_shared_by_multiple_verified_dids": len(cross_did_bodies),
+        "valid_signed_records_on_cross_did_bodies": sum(signed_bodies[body] for body in cross_did_bodies),
+        "max_verified_dids_on_one_body": max((len(dids) for dids in body_signers.values()), default=0),
     }
 
 

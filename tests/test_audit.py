@@ -49,6 +49,21 @@ class AuditExportTests(unittest.TestCase):
         self.assertEqual(report["dids_with_one_record_in_snapshot"], 0)
         self.assertNotIn("same message", json.dumps(report))
 
+    def test_shared_text_distinguishes_distinct_verified_dids(self):
+        keys = [Ed25519PrivateKey.generate(), Ed25519PrivateKey.generate()]
+        records = []
+        for seq, key in enumerate((keys[0], keys[0], keys[1]), 1):
+            did = did_from_key(key)
+            sig = base64.urlsafe_b64encode(
+                key.sign(f"lobby|{seq}|shared text".encode())
+            ).rstrip(b"=").decode()
+            records.append({"seq": seq, "from": did, "nonce": seq, "sig": sig, "text": "shared text"})
+        raw = b"".join((json.dumps(r) + "\n").encode() for r in records)
+        report = audit_export("lobby", raw)
+        self.assertEqual(report["body_variants_shared_by_multiple_verified_dids"], 1)
+        self.assertEqual(report["valid_signed_records_on_cross_did_bodies"], 3)
+        self.assertEqual(report["max_verified_dids_on_one_body"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()

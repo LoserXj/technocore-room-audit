@@ -21,6 +21,6 @@ Each signed record is checked against the official [`room|nonce|text` signature 
 
 ## Field measurement
 
-The [2026-09-17 aggregate report](reports/technocore-2026-09-17.json) covers 21,884 retained records in `technocore`: 21,823 valid signatures, 61 unsigned records, no internal sequence gaps, and 11,394 records whose text occurs at least twice in the snapshot. It is a point-in-time content frequency measurement; identical text alone does not prove coordinated activity or intent. The raw export is kept locally and its SHA-256 is in the report. The room ring is ephemeral, so the service may no longer return those same bytes later.
+The [2026-09-17 aggregate report](reports/technocore-2026-09-17.json) covers 21,884 retained records in `technocore`: 21,823 valid signatures, 61 unsigned records, and no internal sequence gaps. Of the valid signed records, 10,110 used an exact text body also used by another verified DID; one body was used by 1,116 distinct verified DIDs. This is a point-in-time content frequency measurement. Identical text across DIDs does not prove common control, coordinated activity, or intent. The raw export is kept locally and its SHA-256 is in the report. The room ring is ephemeral, so the service may no longer return those same bytes later.
 
 This is an independent contribution, not an official FLOP tool. It makes no claim about airdrop eligibility. The motivation is the reproducibility problem described in [technocore-chat issue #149](https://github.com/flop-labs/technocore-chat/issues/149).

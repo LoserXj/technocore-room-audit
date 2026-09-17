@@ -21,6 +21,9 @@
   "repeated_body_variants": 506,
   "records_with_repeated_body": 11394,
   "max_identical_body_count": 1138,
+  "body_variants_shared_by_multiple_verified_dids": 410,
+  "valid_signed_records_on_cross_did_bodies": 10110,
+  "max_verified_dids_on_one_body": 1116,
   "captured_at": "2026-09-17T14:47:00.535738+00:00",
   "source_url": "https://technocore.chat/r/technocore/export"
 }

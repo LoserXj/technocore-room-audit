@@ -139,9 +139,11 @@ def audit_export(room: str, raw: bytes, *, generation: str = "unknown") -> dict:
     }
 
 
-def compare_exports(old: bytes, new: bytes, *, old_generation: str = "unknown", new_generation: str = "unknown") -> dict:
+def compare_exports(old: bytes, new: bytes, *, old_generation: str, new_generation: str) -> dict:
     """Compare the exact stored bytes of records retained in both exports."""
-    if old_generation != "unknown" and new_generation != "unknown" and old_generation != new_generation:
+    if not old_generation or not new_generation or "unknown" in (old_generation, new_generation):
+        raise ValueError("Both export generations are required to compare sequence numbers")
+    if old_generation != new_generation:
         raise ValueError("Room generations differ; sequence overlap cannot be compared")
 
     def index(raw: bytes) -> dict:
@@ -213,13 +215,15 @@ def main() -> None:
     parser.add_argument("room", help="Existing Technocore room to audit")
     parser.add_argument("--file", type=Path, help="Analyze a saved JSONL export instead of fetching")
     parser.add_argument("--compare", type=Path, help="Compare this saved export to --file by exact record bytes")
-    parser.add_argument("--generation", default="unknown", help="Generation of --file from its export header")
-    parser.add_argument("--compare-generation", default="unknown", help="Generation of --compare from its export header")
+    parser.add_argument("--generation", help="Generation of --file from its export header")
+    parser.add_argument("--compare-generation", help="Generation of --compare from its export header")
     args = parser.parse_args()
     try:
         if args.compare:
             if not args.file:
                 parser.error("--compare requires --file")
+            if not args.generation or not args.compare_generation:
+                parser.error("--compare requires --generation and --compare-generation from the export headers")
             report = compare_exports(args.file.read_bytes(), args.compare.read_bytes(),
                                      old_generation=args.generation, new_generation=args.compare_generation)
         elif args.file:

@@ -23,7 +23,7 @@ To compare two saved exports by sequence and exact raw record bytes:
 .venv/bin/python -m audit technocore --file data/<earlier>.jsonl --compare data/<later>.jsonl --generation 0 --compare-generation 0
 ```
 
-Use the generation values captured in each export's `X-Room-Generation` header; raw JSONL does not include them. If they differ, the comparison refuses to equate sequence numbers. It reports hashes and aggregate differences without printing message text.
+Both generation values are required. Use the values captured in each export's `X-Room-Generation` header; raw JSONL does not include them. If they are missing or differ, the comparison refuses to equate sequence numbers. It reports hashes and aggregate differences without printing message text.
 
 Each signed record is checked against the official [`room|nonce|text` signature format](https://technocore.chat/llms.txt). The report also checks sequence order and gaps **inside the saved snapshot** and counts exact duplicate text. `seq` and `ts` are assigned by the server and are not sender-signed. An earlier sequence absent from the retained ring is not a gap inside the export.
 

@@ -29,6 +29,8 @@ class AuditExportTests(unittest.TestCase):
         self.assertEqual(report["new_only_seq_count"], 1)
         with self.assertRaisesRegex(ValueError, "generations differ"):
             compare_exports(old, new, old_generation="0", new_generation="1")
+        with self.assertRaisesRegex(ValueError, "generations are required"):
+            compare_exports(old, new, old_generation="unknown", new_generation="0")
 
     def test_verifies_signatures_and_reports_gaps_without_exposing_text(self):
         key = Ed25519PrivateKey.generate()
